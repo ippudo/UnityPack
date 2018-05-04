@@ -92,7 +92,30 @@ IMPLEMENTED_FORMATS = (
 	TextureFormat.DXT5,
 	TextureFormat.DXT5Crunched,
 	TextureFormat.BC7,
+
+	TextureFormat.ETC_RGB4,
+	TextureFormat.ETC2_RGB,
+	TextureFormat.ETC2_RGBA8,
+	TextureFormat.ETC2_RGBA1,
+	TextureFormat.EAC_R,
+	TextureFormat.EAC_RG,
+	TextureFormat.EAC_R_SIGNED,
+	TextureFormat.EAC_RG_SIGNED,
+
 )
+
+
+PKM_HEADERS = {
+	TextureFormat.ETC_RGB4 : 0,
+	TextureFormat.ETC2_RGB : 1,
+	TextureFormat.ETC2_RGBA8 : 3,
+	TextureFormat.ETC2_RGBA1 : 4,
+	TextureFormat.EAC_R : 5,
+	TextureFormat.EAC_RG : 6,
+	TextureFormat.EAC_R_SIGNED : 7,
+	TextureFormat.EAC_RG_SIGNED : 8
+}
+
 
 
 class Sprite(Object):
@@ -156,9 +179,26 @@ class Texture2D(Texture):
 	def image(self):
 		from PIL import Image
 		from decrunch import File as CrunchFile
+		import hashlib, os, struct
 
 		if self.format not in IMPLEMENTED_FORMATS:
 			raise NotImplementedError("Unimplemented format %r" % (self.format))
+		
+		if self.format in PKM_HEADERS:
+			version = b'20'
+			if self.format == TextureFormat.ETC_RGB4: version = b'10'
+			t = PKM_HEADERS[self.format]
+			header = struct.pack('!4s2sbbHHHH', b'PKM ', version, 0, t, self.width, self.height, self.width, self.height)
+			image_data =  header + self.image_data
+			sha1 = hashlib.sha1(image_data).hexdigest()
+			infile = "/tmp/image_data_%s.pkm" % sha1
+			outfile = "/tmp/image_data_%s.png" % sha1
+			open(infile , "wb+").write(image_data)
+			os.system(' '.join(["etcpack", infile, "/tmp/", "-ext PNG"])+">/dev/null")
+			im = Image.open(outfile)
+			os.remove(infile)
+			os.remove(outfile)
+			return im
 
 		if self.format in (TextureFormat.DXT1, TextureFormat.DXT1Crunched):
 			codec = "bcn"
@@ -180,13 +220,19 @@ class Texture2D(Texture):
 		if self.format in (TextureFormat.DXT1Crunched, TextureFormat.DXT5Crunched):
 			data = CrunchFile(self.image_data).decode_level(0)
 
-		# Pillow wants bytes, not bytearrays
 		data = bytes(data)
 
 		if not data and size == (0, 0):
 			return None
 
-		return Image.frombytes(mode, size, data, codec, args)
+		img = Image.frombytes(mode, size, data, codec, args)
+
+		if self.format == TextureFormat.RGBA4444:
+			a, b, g, r = img.split()
+			img = Image.merge("RGBA", (r, g, b, a))
+
+		return img
+
 
 
 class StreamingInfo(Object):

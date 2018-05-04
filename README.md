@@ -151,3 +151,11 @@ python-unitypack is a [HearthSim](http://hearthsim.info) project. All developmen
 happens on our IRC channel `#hearthsim` on [Freenode](https://freenode.net).
 
 Contributions are welcome. Make sure to read through the `CONTRIBUTING.md` first.
+
+## ErissonTC Formats
+
+Binaries from 
+
+https://developer.arm.com/products/software-development-tools/graphics-development-tools/mali-texture-compression-tool/downloads
+
+are required to decode ETC files.
