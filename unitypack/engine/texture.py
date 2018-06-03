@@ -1,6 +1,7 @@
 from enum import IntEnum
 from .object import Object, field
-
+import tempfile
+import subprocess
 
 class TextureFormat(IntEnum):
 	Alpha8 = 1
@@ -191,14 +192,16 @@ class Texture2D(Texture):
 			header = struct.pack('!4s2sbbHHHH', b'PKM ', version, 0, t, self.width, self.height, self.width, self.height)
 			image_data =  header + self.image_data
 			sha1 = hashlib.sha1(image_data).hexdigest()
-			infile = "/tmp/image_data_%s.pkm" % sha1
-			outfile = "/tmp/image_data_%s.png" % sha1
+			infile = "%s/image_data_%s.pkm" % (tempfile.gettempdir(), sha1)
+			outfile = "%s/image_data_%s.png" % (tempfile.gettempdir(), sha1)
 			open(infile , "wb+").write(image_data)
-			os.system(' '.join(["etcpack", infile, "/tmp/", "-ext PNG"])+">/dev/null")
+			subprocess.run(["etcpack", infile, tempfile.gettempdir(), "-ext", "PNG"])
 			im = Image.open(outfile)
+			im.transpose(Image.FLIP_TOP_BOTTOM)
 			os.remove(infile)
 			os.remove(outfile)
 			return im
+
 
 		if self.format in (TextureFormat.DXT1, TextureFormat.DXT1Crunched):
 			codec = "bcn"
