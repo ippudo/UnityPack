@@ -3,6 +3,7 @@ import os
 import pickle
 import sys
 import unitypack
+import codecs
 from argparse import ArgumentParser
 from io import BytesIO
 from unitypack.asset import Asset
@@ -72,10 +73,13 @@ class UnityExtract:
 			print("Would write %i bytes to %r" % (len(contents), path))
 			return
 
-		with open(path, mode) as f:
-			written = f.write(contents)
-
-		print("Written %i bytes to %r" % (written, path))
+		encoding = 'utf-8'
+		if 'b' in mode:
+			encoding = None
+			
+		with codecs.open(path, mode, encoding) as f:
+			f.write(contents)
+		print("Saved %r" % path)
 
 	def handle_asset(self, asset):
 		for id, obj in asset.objects.items():
