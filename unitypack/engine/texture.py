@@ -195,7 +195,7 @@ class Texture2D(Texture):
 			infile = "%s/image_data_%s.pkm" % (tempfile.gettempdir(), sha1)
 			outfile = "%s/image_data_%s.png" % (tempfile.gettempdir(), sha1)
 			open(infile , "wb+").write(image_data)
-			subprocess.run(["etcpack", infile, tempfile.gettempdir(), "-ext", "PNG"])
+			subprocess.run(["etcpack", infile, tempfile.gettempdir(), "-ext", "PNG"], stdout=subprocess.PIPE)
 			im = Image.open(outfile)
 			im.transpose(Image.FLIP_TOP_BOTTOM)
 			os.remove(infile)
